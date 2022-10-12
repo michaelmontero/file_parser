@@ -1,67 +1,19 @@
-interface Hook {
-  run(): void;
-}
-
-interface BeforeAllHook extends Hook {}
-interface AfterAllHook extends Hook {}
-
-interface Transformable {
-  transform(item: any): void;
-}
-
-interface Trackable {
-  time: number;
-  startTimeTrack(): void;
-  endTimeTrack(): void;
-}
-
-class NumberTransform implements Transformable {
-  transform(item: any) {
-    console.log(`Working with ${JSON.stringify(item, null, 2)}`);
-  }
-}
-
-type Params = {
-  transform: Transformable;
-  beforeAll?: Hook;
-  afterAll?: Hook[];
-};
-
-class BeforeAll implements BeforeAllHook {
-  run(): void {
-    console.log('Running before all');
-  }
-}
-
-class SendEmailHook implements AfterAllHook {
-  run(): void {
-    console.log('Sending email to db hook');
-  }
-}
-
-class LogHook implements AfterAllHook {
-  run(): void {
-    console.log('Login hook...');
-  }
-}
-
-const numberTransformable = new NumberTransform();
-const beforeAllHook = new BeforeAll();
-
-const logHook = new LogHook();
-const sendEmailHook = new SendEmailHook();
-
 import fs from 'fs';
 import { join } from 'path';
 import { parse } from 'csv-parse';
+import { BeforeAll } from './transformer/number/hooks/before-all.hook';
+import { LogHook } from './transformer/number/hooks/log.hook';
+import { SendEmailHook } from './transformer/number/hooks/email.hook';
+import { NumberTransform } from './transformer/number/number.transformer';
+import { TimeTracker } from './helper/trackable';
+import { Params } from './types/params';
 
-class Main implements Trackable {
-  time: number;
+const numberTransformable = new NumberTransform();
+const logHook = new LogHook();
+const beforeAllHook = new BeforeAll();
+const sendEmailHook = new SendEmailHook();
 
-  startTimeTrack(): void {
-    this.time = Date.now();
-  }
-
+class Main extends TimeTracker {
   run(url: string, { transform: { transform }, beforeAll, afterAll }: Params) {
     this.startTimeTrack();
     const now = Date.now;
@@ -81,10 +33,6 @@ class Main implements Trackable {
     });
 
     fs.createReadStream(url).pipe(parser);
-  }
-
-  endTimeTrack(): void {
-    console.log(`Took ${Date.now() - this.time}ms running`);
   }
 }
 
