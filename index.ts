@@ -1,22 +1,41 @@
-import fs from 'fs';
-import { join } from 'path';
-import { parse } from 'csv-parse';
-import { BeforeAll } from './transformer/number/hooks/before-all.hook';
-import { LogHook } from './transformer/number/hooks/log.hook';
-import { SendEmailHook } from './transformer/number/hooks/email.hook';
-import { NumberTransform } from './transformer/number/number.transformer';
-import { TimeTracker } from './helper/trackable';
-import { Params } from './types/params';
+import fs from "fs";
+import { join } from "path";
+import { parse } from "csv-parse";
+import { BeforeAll } from "./transformer/number/hooks/before-all.hook";
+import { LogHook } from "./transformer/number/hooks/log.hook";
+import { SendEmailHook } from "./transformer/number/hooks/email.hook";
+import { NumberTransform } from "./transformer/number/number.transformer";
+import { TimeTracker } from "./helper/time-tracker.helper";
+import { Params } from "./types/params";
+import { FileLocation } from "./enum/file-location.enum";
+import https from "https";
 
 const numberTransformable = new NumberTransform();
 const logHook = new LogHook();
 const beforeAllHook = new BeforeAll();
 const sendEmailHook = new SendEmailHook();
 
+type Url = {
+  url: string;
+  location: FileLocation;
+};
+
 class Main extends TimeTracker {
-  run(url: string, { transform: { transform }, beforeAll, afterAll }: Params) {
+  readFile({ url, location }: Url, parser: any) {
+    try {
+      if (location === FileLocation.LOCAL)
+        return fs.createReadStream(url).pipe(parser);
+      else if (location === FileLocation.REMOTE)
+        return https.get(url, (cvs) => cvs.pipe(parser));
+
+      throw new Error("Unknown file location");
+    } catch (e) {
+      console.error("Error reading file", e);
+    }
+  }
+
+  run(url: Url, { transform: { transform }, beforeAll, afterAll }: Params) {
     this.startTimeTrack();
-    const now = Date.now;
     beforeAll?.run();
 
     const parser = parse({ columns: true }, (_, records) => {
@@ -27,17 +46,34 @@ class Main extends TimeTracker {
           console.log(`Unable to transform data at index ${index}`);
         }
       });
-
-      afterAll?.forEach((hook) => hook.run());
+      afterAll?.forEach(({ run }) => run());
       this.endTimeTrack();
     });
 
-    fs.createReadStream(url).pipe(parser);
+    this.readFile(url, parser);
   }
 }
 
-new Main().run(join(__dirname, '..', 'data.cvs'), {
-  beforeAll: beforeAllHook,
-  transform: numberTransformable,
-  afterAll: [logHook, sendEmailHook],
-});
+new Main().run(
+  {
+    url: "https://raw.githubusercontent.com/michaelmontero/gd_michael/main/data.cvs",
+    location: FileLocation.REMOTE,
+  },
+  {
+    beforeAll: beforeAllHook,
+    transform: numberTransformable,
+    afterAll: [logHook, sendEmailHook],
+  }
+);
+
+new Main().run(
+  {
+    url: join(__dirname, '..', 'data.csv'),
+    location: FileLocation.LOCAL,
+  },
+  {
+    beforeAll: beforeAllHook,
+    transform: numberTransformable,
+    afterAll: [logHook, sendEmailHook],
+  }
+);

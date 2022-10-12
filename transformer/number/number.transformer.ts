@@ -1,4 +1,4 @@
-import { Transformable } from '../interface/transformable.interface';
+import { Transformable } from "../../interface/transformable.interface";
 
 export class NumberTransform implements Transformable {
   transform(item: any) {
