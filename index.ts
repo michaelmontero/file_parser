@@ -1,9 +1,8 @@
 import fs from "fs";
-import { join } from "path";
 import { parse } from "csv-parse";
-import { BeforeAll } from "./transformer/number/hooks/before-all.hook";
-import { LogHook } from "./transformer/number/hooks/log.hook";
-import { SendEmailHook } from "./transformer/number/hooks/email.hook";
+import { BeforeAll } from "./hooks/before-all.hook";
+import { LogHook } from "./hooks/log.hook";
+import { SendEmailHook } from "./hooks/email.hook";
 import { NumberTransform } from "./transformer/number/number.transformer";
 import { TimeTracker } from "./helper/time-tracker.helper";
 import { Params } from "./types/params";
@@ -56,7 +55,7 @@ class Main extends TimeTracker {
 
 new Main().run(
   {
-    url: "https://raw.githubusercontent.com/michaelmontero/gd_michael/main/data.cvs",
+    url: "https://raw.githubusercontent.com/michaelmontero/gd_michael/main/data.csv",
     location: FileLocation.REMOTE,
   },
   {
@@ -66,14 +65,14 @@ new Main().run(
   }
 );
 
-new Main().run(
-  {
-    url: join(__dirname, '..', 'data.csv'),
-    location: FileLocation.LOCAL,
-  },
-  {
-    beforeAll: beforeAllHook,
-    transform: numberTransformable,
-    afterAll: [logHook, sendEmailHook],
-  }
-);
+// new Main().run(
+//   {
+//     url: join(__dirname, '..', 'data.csv'),
+//     location: FileLocation.LOCAL,
+//   },
+//   {
+//     beforeAll: beforeAllHook,
+//     transform: numberTransformable,
+//     afterAll: [logHook, sendEmailHook],
+//   }
+// );

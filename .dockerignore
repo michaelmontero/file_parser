@@ -1,0 +1,11 @@
+.git
+.gitignore
+.dockerignore
+
+# Build dependencies
+dist
+node_modules
+
+.editorconfig
+Dockerfile
+README.md
