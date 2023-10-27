@@ -1,5 +1,3 @@
-# Michael Montero's GoDaddy challenge 
-
 ## Functional requirements
 
 | Requirement   |        Status | How to use it? |
